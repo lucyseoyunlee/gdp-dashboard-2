@@ -1,19 +1,25 @@
-# :earth_americas: GDP dashboard template
+# 🍪 과자 공장 곱셈 탐험
 
-A simple Streamlit app showing the GDP of different countries in the world.
+초등학교 3학년 2학기 수학 「곱셈」을 연습하는 Streamlit 학습 앱입니다.
+상자에 과자를 포장하는 활동으로 곱셈식과 자릿값별 계산 원리를 탐구할 수 있습니다.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://gdp-dashboard-template.streamlit.app/)
+## 실행하기
 
-### How to run it on your own machine
+Codespaces 터미널에서 프로젝트 폴더에 있는지 확인한 뒤 아래 명령을 실행하세요.
 
-1. Install the requirements
+```bash
+python -m pip install -r requirements.txt
+python -m streamlit run streamlit_app.py
+```
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+앱이 실행되면 터미널에 표시된 주소를 열어 사용합니다. Codespaces에서는 보통
+포트 8501이 자동으로 전달됩니다.
 
-2. Run the app
+## 활동
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+1. 무작위 과자 주문을 살펴보고 전체 과자 수를 예상합니다.
+2. 상자 수와 상자당 과자 수를 바꾸며 여러 표현으로 포장을 실험합니다.
+3. 다섯 가지 곱셈 유형을 자릿값별 부분곱으로 탐구합니다.
+4. 난이도와 유형을 골라 새 문제의 곱셈식과 답을 직접 입력합니다.
+
+로그인 없이 사용할 수 있으며, 학습 화면과 계산은 `streamlit_app.py`에서 실행됩니다.
