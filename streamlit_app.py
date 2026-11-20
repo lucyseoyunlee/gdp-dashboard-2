@@ -156,18 +156,18 @@ def draw_box(count, snack, label, mode, columns=6):
     )
 
 
-def show_boxes(boxes, per_box, snack, mode, columns=6):
+def show_boxes(box_counts, snack, mode, columns=6):
     cols_per_row = 4
-    for start in range(0, boxes, cols_per_row):
-        cols = st.columns(min(cols_per_row, boxes - start))
+    for start in range(0, len(box_counts), cols_per_row):
+        cols = st.columns(min(cols_per_row, len(box_counts) - start))
         for offset, col in enumerate(cols):
-            number = start + offset + 1
+            box_index = start + offset
             with col:
                 st.markdown(
                     draw_box(
-                        per_box,
+                        box_counts[box_index],
                         snack,
-                        f"{number}번 상자",
+                        f"{box_index + 1}번 상자",
                         mode,
                         columns,
                     ),
@@ -250,7 +250,7 @@ def draw_order(order):
         unsafe_allow_html=True,
     )
     if mode in ("그림", "배열"):
-        show_boxes(boxes, per_box, snack, mode, columns=6)
+        show_boxes([per_box] * boxes, snack, mode, columns=6)
     elif mode == "묶음":
         tens, ones = divmod(per_box, 10)
         st.write(f"과자 종류: {SNACKS[snack]} {snack}")
@@ -368,10 +368,15 @@ if activity == "1. 주문서 확인":
 
 elif activity == "2. 포장 실험실":
     st.header("🧪 과자 포장 실험실")
-    st.write("상자 수와 상자마다 담을 과자 수를 바꿔 보세요.")
+    st.write("상자 수와 상자마다 담을 과자 수를 바꾸거나, 상자 사이로 과자를 옮겨 보세요.")
     if st.button("↩️ 실험 초기화"):
         st.session_state.sim_boxes = 4
         st.session_state.sim_per_box = 12
+        st.session_state.sim_box_counts = [12] * 4
+        st.session_state.sim_distribution_settings = (4, 12)
+        st.session_state.transfer_source = 0
+        st.session_state.transfer_destination = 1
+        st.session_state.transfer_amount = 1
     controls = st.columns(2)
     with controls[0]:
         st.slider("포장할 상자 수", 1, 8, key="sim_boxes")
@@ -385,16 +390,70 @@ elif activity == "2. 포장 실험실":
     )
     boxes = st.session_state.sim_boxes
     per_box = st.session_state.sim_per_box
-    total = boxes * per_box
+    settings = (boxes, per_box)
+    if st.session_state.get("sim_distribution_settings") != settings:
+        st.session_state.sim_box_counts = [per_box] * boxes
+        st.session_state.sim_distribution_settings = settings
+        st.session_state.transfer_source = 0
+        st.session_state.transfer_destination = 1 if boxes > 1 else 0
+        st.session_state.transfer_amount = 1
+
+    box_counts = st.session_state.sim_box_counts
+    total = sum(box_counts)
     st.markdown(
         f"<div class='math-expression'>{per_box}개 × {boxes}상자 "
         f"= {total}개</div>",
         unsafe_allow_html=True,
     )
-    show_boxes(boxes, per_box, "초코 쿠키", mode)
+    st.markdown("#### 과자를 다른 상자로 옮겨 볼까요?")
+    if boxes < 2:
+        st.info("상자가 두 개 이상 있어야 과자를 옮길 수 있어요.")
+    else:
+        transfer_cols = st.columns(3)
+        with transfer_cols[0]:
+            source = st.selectbox(
+                "어느 상자에서?",
+                range(boxes),
+                format_func=lambda index: (
+                    f"{index + 1}번 상자 ({box_counts[index]}개)"
+                ),
+                key="transfer_source",
+            )
+        with transfer_cols[1]:
+            destination = st.selectbox(
+                "어느 상자로?",
+                range(boxes),
+                format_func=lambda index: (
+                    f"{index + 1}번 상자 ({box_counts[index]}개)"
+                ),
+                key="transfer_destination",
+            )
+        available = box_counts[source]
+        amount_options = list(range(1, available + 1)) if available else [0]
+        if st.session_state.get("transfer_amount") not in amount_options:
+            st.session_state.transfer_amount = amount_options[0]
+        with transfer_cols[2]:
+            amount = st.selectbox(
+                "몇 개 옮길까요?",
+                amount_options,
+                format_func=lambda count: f"{count}개",
+                key="transfer_amount",
+                disabled=available == 0,
+            )
+        if st.button("➡️ 과자 옮기기", type="primary"):
+            if source == destination:
+                st.warning("서로 다른 상자를 골라 주세요.")
+            elif amount == 0:
+                st.warning("옮길 과자가 없어요. 다른 상자를 골라 보세요.")
+            else:
+                box_counts[source] -= amount
+                box_counts[destination] += amount
+                st.session_state.sim_box_counts = box_counts
+                st.rerun()
+
+    show_boxes(box_counts, "초코 쿠키", mode)
     st.success(
-        f"상자 하나에 {per_box}개씩 들어 있고 상자가 {boxes}개예요. "
-        f"모두 {total}개랍니다."
+        f"모두 {total}개예요. 상자 사이로 옮겨도 전체 과자 수는 변하지 않아요."
     )
 
 elif activity == "3. 계산 원리 탐구":
